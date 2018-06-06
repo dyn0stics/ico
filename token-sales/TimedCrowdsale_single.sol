@@ -1,4 +1,4 @@
-pragma solidity ^0.4.0;
+pragma solidity ^0.4.23;
 
 /**
  * @title SafeMath
@@ -326,4 +326,20 @@ contract TimedCrowdsale is Crowdsale {
         super._preValidatePurchase(_beneficiary, _weiAmount);
     }
 
+}
+
+/**
+ * @title DynoCrowdsale
+ */
+contract DynoCrowdsale is Crowdsale, TimedCrowdsale {
+
+    constructor(
+        uint256 _openingTime,
+        uint256 _closingTime,
+        uint256 _rate,
+        address _wallet,
+        ERC20Basic _token
+    ) public
+    Crowdsale(_rate, _wallet, _token)
+    TimedCrowdsale(_openingTime, _closingTime)
 }
