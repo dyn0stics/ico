@@ -152,7 +152,7 @@ contract Crowdsale {
     function buyTokens(address _beneficiary) public payable {
 
         uint256 weiAmount = msg.value;
-        _preValidatePurchase(_beneficiary, weiAmount);
+       // _preValidatePurchase(_beneficiary, weiAmount);
 
         // calculate token amount to be created
         uint256 tokens = _getTokenAmount(weiAmount);
@@ -160,7 +160,10 @@ contract Crowdsale {
         // update state
         weiRaised = weiRaised.add(weiAmount);
 
+        // transfer purchased tokens
         _processPurchase(_beneficiary, tokens);
+
+        // emit Purchase event
         emit TokenPurchase(
             msg.sender,
             _beneficiary,
@@ -168,10 +171,8 @@ contract Crowdsale {
             tokens
         );
 
-        _updatePurchasingState(_beneficiary, weiAmount);
-
+        // forward funds to funds wallet
         _forwardFunds();
-        _postValidatePurchase(_beneficiary, weiAmount);
     }
 
     // -----------------------------------------
@@ -191,20 +192,6 @@ contract Crowdsale {
     {
         require(_beneficiary != address(0));
         require(_weiAmount != 0);
-    }
-
-    /**
-     * @dev Validation of an executed purchase. Observe state and use revert statements to undo rollback when valid conditions are not met.
-     * @param _beneficiary Address performing the token purchase
-     * @param _weiAmount Value in wei involved in the purchase
-     */
-    function _postValidatePurchase(
-        address _beneficiary,
-        uint256 _weiAmount
-    )
-    internal
-    {
-        // optional override
     }
 
     /**
@@ -233,20 +220,6 @@ contract Crowdsale {
     internal
     {
         _deliverTokens(_beneficiary, _tokenAmount);
-    }
-
-    /**
-     * @dev Override for extensions that require an internal state to check for validity (current user contributions, etc.)
-     * @param _beneficiary Address receiving the tokens
-     * @param _weiAmount Value in wei involved in the purchase
-     */
-    function _updatePurchasingState(
-        address _beneficiary,
-        uint256 _weiAmount
-    )
-    internal
-    {
-        // optional override
     }
 
     /**
@@ -312,6 +285,15 @@ contract TimedCrowdsale is Crowdsale {
     }
 
     /**
+     * @dev Checks whether the period in which the crowdsale is open has started.
+     * @return Whether crowdsale period has elapsed
+     */
+    function isOpened() public view returns (bool) {
+        // solium-disable-next-line security/no-block-members
+        return block.timestamp > openingTime && block.timestamp < closingTime;
+    }
+
+    /**
      * @dev Extend parent behavior requiring to be within contributing period
      * @param _beneficiary Token purchaser
      * @param _weiAmount Amount of wei contributed
@@ -338,8 +320,10 @@ contract DynoCrowdsale is Crowdsale, TimedCrowdsale {
         uint256 _closingTime,
         uint256 _rate,
         address _wallet,
-        ERC20Basic _token
+        ERC20 _token
     ) public
     Crowdsale(_rate, _wallet, _token)
-    TimedCrowdsale(_openingTime, _closingTime)
+    TimedCrowdsale(_openingTime, _closingTime){
+
+    }
 }
