@@ -249,7 +249,7 @@ contract BurnableToken is BasicToken {
 
 contract DynoToken is BurnableToken, StandardToken {
 
-    string public constant name = "Dyno Token";
+    string public constant name = "DYNO Token";
     string public constant symbol = "DYNO";
     uint8 public constant decimals = 6;
 

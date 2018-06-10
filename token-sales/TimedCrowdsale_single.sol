@@ -105,6 +105,9 @@ contract Crowdsale {
     // Amount of wei raised
     uint256 public weiRaised;
 
+    // Max amount of wei per address
+    uint256 public maxContribution;
+
     /**
      * Event for token purchase logging
      * @param purchaser who paid for the tokens
@@ -124,7 +127,7 @@ contract Crowdsale {
      * @param _wallet Address where collected funds will be forwarded to
      * @param _token Address of the token being sold
      */
-    constructor(uint256 _rate, address _wallet, ERC20 _token) public {
+    constructor(uint256 _rate, address _wallet, ERC20 _token, uint256 _maxContribution) public {
         require(_rate > 0);
         require(_wallet != address(0));
         require(_token != address(0));
@@ -132,6 +135,7 @@ contract Crowdsale {
         rate = _rate;
         wallet = _wallet;
         token = _token;
+        maxContribution = _maxContribution;
     }
 
     // -----------------------------------------
@@ -152,7 +156,7 @@ contract Crowdsale {
     function buyTokens(address _beneficiary) public payable {
 
         uint256 weiAmount = msg.value;
-       // _preValidatePurchase(_beneficiary, weiAmount);
+        _preValidatePurchase(_beneficiary, weiAmount);
 
         // calculate token amount to be created
         uint256 tokens = _getTokenAmount(weiAmount);
@@ -192,6 +196,7 @@ contract Crowdsale {
     {
         require(_beneficiary != address(0));
         require(_weiAmount != 0);
+        require(_weiAmount < maxContribution);
     }
 
     /**
@@ -205,7 +210,7 @@ contract Crowdsale {
     )
     internal
     {
-        token.transfer(_beneficiary, _tokenAmount);
+        token.transferFrom("0x692a70d2e424a56d2c6c27aa97d1a86395877b3a", _beneficiary, _tokenAmount);
     }
 
     /**
@@ -319,10 +324,11 @@ contract DynoCrowdsale is Crowdsale, TimedCrowdsale {
         uint256 _openingTime,
         uint256 _closingTime,
         uint256 _rate,
+        uint256 _maxContribution,
         address _wallet,
         ERC20 _token
     ) public
-    Crowdsale(_rate, _wallet, _token)
+    Crowdsale(_rate, _wallet, _token, _maxContribution)
     TimedCrowdsale(_openingTime, _closingTime){
 
     }
