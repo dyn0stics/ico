@@ -99,6 +99,9 @@ contract Crowdsale {
     // Address where funds are collected
     address public wallet;
 
+    // Address for the source of funds for sale
+    address public tokenSource;
+
     // How many token units a buyer gets per wei
     uint256 public rate;
 
@@ -210,7 +213,8 @@ contract Crowdsale {
     )
     internal
     {
-        token.transferFrom("0x692a70d2e424a56d2c6c27aa97d1a86395877b3a", _beneficiary, _tokenAmount);
+        ERC20 source = ERC20(tokenSource);
+        source.transferFrom(source, _beneficiary, _tokenAmount);
     }
 
     /**
@@ -244,6 +248,7 @@ contract Crowdsale {
     function _forwardFunds() internal {
         wallet.transfer(msg.value);
     }
+
 }
 
 
@@ -272,9 +277,8 @@ contract TimedCrowdsale is Crowdsale {
      * @param _closingTime Crowdsale closing time
      */
     constructor(uint256 _openingTime, uint256 _closingTime) public {
-        // solium-disable-next-line security/no-block-members
-        require(_openingTime >= block.timestamp);
-        require(_closingTime >= _openingTime);
+      //  require(_openingTime >= block.timestamp);
+      //  require(_closingTime >= _openingTime);
 
         openingTime = _openingTime;
         closingTime = _closingTime;
@@ -308,17 +312,54 @@ contract TimedCrowdsale is Crowdsale {
         uint256 _weiAmount
     )
     internal
-    onlyWhileOpen
+  //  onlyWhileOpen
     {
-        super._preValidatePurchase(_beneficiary, _weiAmount);
+   //     super._preValidatePurchase(_beneficiary, _weiAmount);
     }
 
+}
+
+
+/**
+ * @title AllowanceCrowdsale
+ * @dev Extension of Crowdsale where tokens are held by a wallet, which approves an allowance to the crowdsale.
+ */
+contract AllowanceCrowdsale is Crowdsale {
+    using SafeMath for uint256;
+
+    address public tokenWallet;
+
+    /**
+     * @dev Constructor, takes token wallet address.
+     * @param _tokenWallet Address holding the tokens, which has approved allowance to the crowdsale
+     */
+    function AllowanceCrowdsale(address _tokenWallet) public {
+        require(_tokenWallet != address(0));
+        tokenWallet = _tokenWallet;
+    }
+
+    /**
+     * @dev Checks the amount of tokens left in the allowance.
+     * @return Amount of tokens left in the allowance
+     */
+    function remainingTokens() public view returns (uint256) {
+        return token.allowance(tokenWallet, this);
+    }
+
+    /**
+     * @dev Overrides parent behavior by transferring tokens from wallet.
+     * @param _beneficiary Token purchaser
+     * @param _tokenAmount Amount of tokens purchased
+     */
+    function _deliverTokens(address _beneficiary, uint256 _tokenAmount) internal {
+        token.transferFrom(tokenWallet, _beneficiary, _tokenAmount);
+    }
 }
 
 /**
  * @title DynoCrowdsale
  */
-contract DynoCrowdsale is Crowdsale, TimedCrowdsale {
+contract DynoCrowdsale is Crowdsale, TimedCrowdsale, AllowanceCrowdsale {
 
     constructor(
         uint256 _openingTime,
@@ -326,10 +367,13 @@ contract DynoCrowdsale is Crowdsale, TimedCrowdsale {
         uint256 _rate,
         uint256 _maxContribution,
         address _wallet,
+        address _tokenWallet,
         ERC20 _token
     ) public
     Crowdsale(_rate, _wallet, _token, _maxContribution)
+    AllowanceCrowdsale(_tokenWallet)
     TimedCrowdsale(_openingTime, _closingTime){
 
     }
+
 }
