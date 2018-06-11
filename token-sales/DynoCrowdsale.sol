@@ -23,10 +23,12 @@ contract DynoCrowdsale {
         uint256 _closingTime,
         uint256 _rate,
         address _wallet,
-        MintableToken _token
+        address _tokenWallet,
+        ERC20 _token
     )
     public
     Crowdsale(_rate, _wallet, _token)
+    AllowanceCrowdsale(_tokenWallet)
     TimedCrowdsale(_openingTime, _closingTime){
 
     }
