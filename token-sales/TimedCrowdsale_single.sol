@@ -99,9 +99,6 @@ contract Crowdsale {
     // Address where funds are collected
     address public wallet;
 
-    // Address for the source of funds for sale
-    address public tokenSource;
-
     // How many token units a buyer gets per wei
     uint256 public rate;
 
@@ -277,8 +274,8 @@ contract TimedCrowdsale is Crowdsale {
      * @param _closingTime Crowdsale closing time
      */
     constructor(uint256 _openingTime, uint256 _closingTime) public {
-      //  require(_openingTime >= block.timestamp);
-      //  require(_closingTime >= _openingTime);
+        require(_openingTime >= block.timestamp);
+        require(_closingTime >= _openingTime);
 
         openingTime = _openingTime;
         closingTime = _closingTime;
@@ -312,9 +309,9 @@ contract TimedCrowdsale is Crowdsale {
         uint256 _weiAmount
     )
     internal
-  //  onlyWhileOpen
+    onlyWhileOpen
     {
-   //     super._preValidatePurchase(_beneficiary, _weiAmount);
+        super._preValidatePurchase(_beneficiary, _weiAmount);
     }
 
 }
